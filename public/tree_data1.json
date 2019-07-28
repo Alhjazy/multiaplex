@@ -1,0 +1,42 @@
+[{
+	"id":1,
+	"text":"HRMS",
+	"children":[{
+		"id":11,
+		"text":"Employee's",
+		"iconCls":"fa fa-copy",
+		"url":"/employee"
+	},{
+		"id":12,
+		"text":"Program Files",
+		"children":[{
+			"id":121,
+			"text":"Intel"
+		},{
+			"id":122,
+			"text":"Java",
+			"attributes":{
+				"p1":"Custom Attribute1",
+				"p2":"Custom Attribute2"
+			}
+		},{
+			"id":123,
+			"text":"Microsoft Office"
+		},{
+			"id":124,
+			"text":"Games",
+			"checked":true
+		}]
+	},{
+		"id":13,
+		"text":"index.html"
+	},{
+		"id":14,
+		"text":"about.html"
+	},{
+		"id":15,
+		"text":"Settings",
+		"iconCls":"fa fa-gear",
+		"url":"/employee"
+	}]
+}]
