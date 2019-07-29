@@ -709,6 +709,7 @@
         }
 
         static Add(_this, event) {
+            console.log(event);
             let container;
             var path = event.path || (event.composedPath && event.composedPath());
             for (let el of path) {
@@ -720,6 +721,7 @@
 
             let id = parseInt(container.getAttribute('product-id'));
             let product = products.filter(item => { return item.$id === id })[0];
+            console.log(product);
             cart.Add(product);
         }
 
@@ -1159,6 +1161,29 @@ function add_payment(el) {
                 }
             }
         },
+        sidebarOrder: {
+            name: 'sidebarOrder',
+            nodes: [
+                { id: 'general', text: 'General', group: true, expanded: true, nodes: [
+                    { id: 'information', text: 'Information', img: 'icon-page', selected: true },
+                    { id: 'items', text: 'Items', img: 'icon-page'},
+                    { id: 'payments', text: 'Payments', img: 'icon-page' },
+                ]}
+            ],
+            onClick: function (event) {
+                switch (event.target) {
+                    case 'information':
+                        w2ui.layout.content('main', w2ui.sales_order_info);
+                        break;
+                    case 'items':
+                        w2ui.layout.content('main', w2ui.sales_order_items);
+                        break;
+                    case 'payments':
+                        w2ui.layout.content('main', w2ui.sales_order_payments);
+                        break;
+                }
+            }
+        },
         customer: {
             name: 'customer',
             style: 'border: 0px; border-left: 1px solid silver',
@@ -1225,17 +1250,34 @@ function add_payment(el) {
                 { field: 'total_balance', caption: 'INVOICE AMOUNT', size: '100%' ,editable:{type:'text'}, searchable: true},
             ],
             onDblClick:function (event) {
-//                $('input[name="customer_id"]').val(this.records[event.recid].id);
-//                $('button#customer').html('<span>Name#'+this.records[event.recid].name+'</span><hr><span> Phone#'+this.records[event.recid].phone+'</span>');
-//                w2popup.close();
-                console.log(this.records[event.recid].order_items);
-                var cart = new Cart(this.records[event.recid].order_items);
-//                $.each(this.records[event.recid].order_items,function (k,v) {
-//                    var cart = new Cart();
-//                    var product = {id:v.id,name:v.product.name,image:'',price:v.price};
-//                    cart.add(product);
-//                });
-
+                console.log(this.records[event.recid]);
+                w2ui['layout'].set('left', {size:143, hidden: false ,content: $().w2sidebar(config.sidebarOrder)});
+                var order = [];
+                $.each(this.records[event.recid],function (k,v) {
+                    if(k==='id') return true;
+                    if(k==='recid') return true;
+                    if(k==='order_payment') return true;
+                    if(k==='order_items') return true;
+                    if(k==='customer'){order.push({name:'customer Name:',value:v.name});order.push({name:'customer Phone:',value:v.phone}); return true;}
+                    if(k==='deleted_by') return true;
+                    if(k==='updated_by') return true;
+                    if(k==='created_by') return true;
+                    if(k==='deleted_at') return true;
+                    if(k==='updated_at') return true;
+                    if(k==='created_at') return true;
+                    if(k==='status') return true;
+                    if(k==='type') return true;
+                    if(k==='remark') return true;
+                    if(k==='description') return true;
+                    if(k==='employee_id') return true;
+                    if(k==='location_id') return true;
+                    if(k==='customer_id') return true;
+                    order.push({name:k,value:v});
+                });
+                w2ui['sales_order_info'].records = order;
+                w2ui['sales_order_items'].records = this.records[event.recid].order_items;
+                w2ui['sales_order_payments'].records = this.records[event.recid].order_payment;
+                return openSalesOrderPopup('Invoice#'+this.records[event.recid].reference,this.records[event.recid]);
             },
             onChange:function (event) {
 //                if(event.column === 1){
@@ -1293,6 +1335,44 @@ function add_payment(el) {
 //                }
             }
         },
+        sales_order_info: {
+            name: 'sales_order_info',
+            show: { header: false, columnHeaders: false },
+            columns: [
+                { field: 'name', caption: 'Name', size: '150px', style: 'background-color: #efefef; border-bottom: 1px solid white; padding-right: 5px;', attr: "align=right" },
+                { field: 'value', caption: 'Value', size: '100%' }
+            ],
+        },
+        sales_order_items: {
+            name: 'sales_order_items',
+            show:{
+                header: false,
+                columnHeaders: true,
+            },
+            columns: [
+                { field: 'product.sku', caption: 'SKU', size: '120px'},
+                { field: 'product.name', caption: 'NAME', size: '20%' },
+                { field: 'price', caption: 'PRICE', size: '10%' },
+                { field: 'quantity', caption: 'QTY', size: '10%'},
+                { field: 'stock', caption: 'STOCK', size: '10%'},
+                { field: 'discount', caption: 'DISCOUNT', size: '10%' },
+                { field: 'tax_value', caption: 'TAX', size: '10%' },
+                { field: 'total', caption: 'TOTAL', size: '15%'},
+            ],
+        },
+        sales_order_payments: {
+            name: 'sales_order_payments',
+            show:{
+                header: false,
+                columnHeaders: true,
+            },
+            columns: [
+                { field: 'reference', caption: 'REFERENCE', size: '120px' },
+                { field: 'payment_method', caption: 'METHOD', size: '20%' },
+                { field: 'amount', caption: 'AMOUNT', size: '20%' },
+                { field: 'outstanding_balance', caption: 'OUTSTANDING BALANCE',size: '20%'},
+            ],
+        },
     };
 
 
@@ -1304,6 +1384,9 @@ $(function () {
     $().w2grid(config.customer);
     $().w2grid(config.search);
     $().w2grid(config.sales_return);
+    $().w2grid(config.sales_order_info);
+    $().w2grid(config.sales_order_items);
+    $().w2grid(config.sales_order_payments);
 });
 
 function findCustomer(el) {
@@ -1339,6 +1422,30 @@ function openSearchPopup() {
                     w2ui.layout.content('main', w2ui.search);
                     w2ui['layout'].set('top', { hidden: true });
                     w2ui['layout'].set('left', { hidden: true });
+                    w2ui['layout'].set('bottom', { hidden: true });
+                }
+            },
+            onToggle: function (event) {
+//                event.onComplete = function () {
+//                    w2ui.layout.resize();
+//                }
+            }
+        });
+    }
+function openSalesOrderPopup(title,obj) {
+        w2popup.open({
+            title   : title,
+            width   : 1000,
+            height  : 600,
+            showMax : true,
+            body    : '<div id="main" style="position: absolute; left: 0px; top: 0px; right: 0px; bottom: 0px;"></div>',
+            onOpen  : function (event) {
+                event.onComplete = function () {
+
+                    $('#w2ui-popup #main').w2render('layout');
+//                    w2ui.layout.content('bottom', '<div style="padding: 3px;"><button  id="search"  class="post-btn" type="button" onclick="search();">Search(Enter)</button></div>');
+                    w2ui.layout.content('main', w2ui.sales_order_info);
+                    w2ui['layout'].set('top', { hidden: true });
                     w2ui['layout'].set('bottom', { hidden: true });
                 }
             },
